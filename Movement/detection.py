@@ -44,30 +44,72 @@ def colorSpace(cam):
         if key == ord("q"):
             break
 
+def bgSubMOG(cap):
+	fgbg = cv.bgsegm.createBackgroundSubtractorMOG()
 
-def bgSub(cap):
+	while(1):
+		ret, frame=cap.read()
+		_, original=cap.read()
+		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
+		fgmask = fgbg.apply(frame)
+		cv.imshow('frame',fgmask)
+		cv.imshow('original', original)
+		k = cv.waitKey(30) & 0xff
+		if k == 27:
+			break
+	cap.release()
+	cv.destroyAllWindows()
+
+
+def bgSubMOG2(cap):
+	fgbg = cv.createBackgroundSubtractorMOG2()
+
+	while(1):
+		ret, frame = cap.read()
+		_, original = cap.read()
+
+		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
+
+		fgmask = fgbg.apply(frame)
+
+		cv.imshow('frame',fgmask)
+		cv.imshow('original', original)
+
+		k = cv.waitKey(30) & 0xff
+		if k == 27:
+			break
+
+	cap.release()
+	cv.destroyAllWindows()
+
+
+def bgSubGMG(cap):
 
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3,3))
-    fgbg = cv.bgsegm.createBackgroundSubtractorMOG()
+    fgbg = cv.bgsegm.createBackgroundSubtractorGMG()
 
-    while True:
-        _, frame = cap.read()
+    while(1):
+        ret, frame = cap.read()
+	_, original = cap.read()
 
-        frame = split(frame)[0]
+	frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+	original = cv.resize(frame, ( 640, 480), interpolation=cv.INTER_LINEAR)
+    #    frame = split(frame)[0]
 
         fgmask = fgbg.apply(frame)
         fgmask = cv.morphologyEx(fgmask, cv.MORPH_OPEN, kernel)
 
-        cv.imshow('frame', frame)
-        cv.imshow('mask', fgmask)
+        cv.imshow('frame', fgmask)
+        cv.imshow('original', original)
 
-        if cv.sumElems(fgmask)[0] > 100000:
-            print('!')
-            return frame
+    #    if cv.sumElems(fgmask)[0] > 100000:
+     #       print('!')
+      #      return frame
 
-        k = cv.waitKey(30) & 0xFF
-
-        if k == 27:
+        key = cv.waitKey(30) & 0xff
+        if key == 27:
             break
 
     cap.release()
@@ -86,6 +128,8 @@ def frameDiff(camera):
     while True:
         _, image1 = camera.read()
         _, image2 = camera.read()
+	image1 = cv.resize(image1, (640, 480), interpolation=cv.INTER_LINEAR)
+	image2 = cv.resize(image2, (640, 480), interpolation=cv.INTER_LINEAR)
 
 #        image1 = split(image1)[0]
 #        image2 = split(image2)[0]
@@ -109,10 +153,8 @@ def frameDiff(camera):
         if cnt > 2:
             print("**considerable motion**")
             return image2
-
         cv.imshow("Frame", image1)
         cv.imshow("Motion", thresh)
-
         key = cv.waitKey(1) & 0xFF
         if key == ord("q"):
             print("END OF DETECTION")
