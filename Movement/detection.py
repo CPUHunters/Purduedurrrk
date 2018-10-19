@@ -67,15 +67,30 @@ def bgSubMOG2(cap):
 
 	while(1):
 		ret, frame = cap.read()
-		_, original = cap.read()
+    		_, original = cap.read()
+                
+                hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+                #lower_red=np.array([0,20,20])
+                #upper_red=np.array([90,255,255])
 
-		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+                lower_red=np.array([90,0,200])
+                upper_red=np.array([255,255,255])
+                
+                mask=cv.inRange(hsv, lower_red, upper_red)
+                res=cv.bitwise_and(frame,frame,mask=mask)
+		
+                frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
+                mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
+		res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
+                
+                fgmaskres= fgbg.apply(res)
+                fgmaskfra = fgbg.apply(frame)
 
-		fgmask = fgbg.apply(frame)
-
-		cv.imshow('frame',fgmask)
+                cv.imshow('frame_res',fgmaskres)
 		cv.imshow('original', original)
+                cv.imshow('frame_original', fgmaskfra)
+                cv.imshow('res',res)
 
 		k = cv.waitKey(30) & 0xff
 		if k == 27:
