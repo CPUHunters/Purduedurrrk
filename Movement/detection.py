@@ -50,11 +50,26 @@ def bgSubMOG(cap):
 	while(1):
 		ret, frame=cap.read()
 		_, original=cap.read()
-		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+		
+		hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+                lower_red=np.array([90,0,200])
+                upper_red=np.array([255,255,255])
+
+                mask=cv.inRange(hsv, lower_red, upper_red)
+                res=cv.bitwise_and(frame,frame,mask=mask)
+
+                frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
-		fgmask = fgbg.apply(frame)
-		cv.imshow('frame',fgmask)
+		mask = cv.resize(mask, (640,480), interpolation=cv.INTER_LINEAR)
+                res = cv.resize(res, (640,480), interpolation=cv.INTER_LINEAR)
+                
+                fgmask = fgbg.apply(frame)
+		fgmask_res = fgbg.apply(res)
+
+                cv.imshow('frame',fgmask)
 		cv.imshow('original', original)
+                cv.imshow('frame_res', fgmask_res)
+                cv.imshow('res', res)
 		k = cv.waitKey(30) & 0xff
 		if k == 27:
 			break
@@ -64,6 +79,7 @@ def bgSubMOG(cap):
 
 def bgSubMOG2(cap):
 	fgbg = cv.createBackgroundSubtractorMOG2()
+	fgbg.setDetectShadows(False)
 
 	while(1):
 		ret, frame = cap.read()
@@ -76,25 +92,34 @@ def bgSubMOG2(cap):
                 lower_red=np.array([90,0,200])
                 upper_red=np.array([255,255,255])
                 
-                mask=cv.inRange(hsv, lower_red, upper_red)
-                res=cv.bitwise_and(frame,frame,mask=mask)
+                mask = cv.inRange(hsv, lower_red, upper_red)
+                fmask = cv.inRange(hsv, lower_red, upper_red)
+                fmask = cv.medianBlur(fmask, 3)
+                
+                res = cv.bitwise_and(frame,frame,mask=mask)
+                fres = cv.bitwise_and(frame, frame, mask=fmask) 
 		
                 frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
                 mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
+                fmask = cv.resize(fmask, (640, 480), interpolation=cv.INTER_LINEAR)
 		res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
+		fres = cv.resize(fres, (640, 480), interpolation=cv.INTER_LINEAR)
                 
                 fgmaskres= fgbg.apply(res)
                 fgmaskfra = fgbg.apply(frame)
+                fgmaskfres = fgbg.apply(fres)
+                fgmaskfres = cv.medianBlur(fgmaskres, 3)
 
-                cv.imshow('frame_res',fgmaskres)
-		cv.imshow('original', original)
-                cv.imshow('frame_original', fgmaskfra)
-                cv.imshow('res',res)
+                cv.imshow('frame_res',fgmaskres) # Green deleted
+		#cv.imshow('original', original)
+                cv.imshow('frame_original', fgmaskfra) # BS original
+                #cv.imshow('res',res)
+                cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
 
 		k = cv.waitKey(30) & 0xff
 		if k == 27:
-			break
+                    break
 
 	cap.release()
 	cv.destroyAllWindows()
@@ -109,15 +134,28 @@ def bgSubGMG(cap):
         ret, frame = cap.read()
 	_, original = cap.read()
 
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        lower_red = np.array([90,0,200])
+        upper_red = np.array([255,255,255])
+
+        mask = cv.inRange(hsv, lower_red, upper_red)
+        res = cv.bitwise_and(frame, frame, mask=mask)
+
 	frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 	original = cv.resize(frame, ( 640, 480), interpolation=cv.INTER_LINEAR)
+        mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
+	res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
+                
     #    frame = split(frame)[0]
 
         fgmask = fgbg.apply(frame)
         fgmask = cv.morphologyEx(fgmask, cv.MORPH_OPEN, kernel)
+        fgmask_res = fgbg.apply(res)
+        fgmask_res = cv.morphologyEx(fgmask_res, cv.MORPH_OPEN, kernel)
 
         cv.imshow('frame', fgmask)
         cv.imshow('original', original)
+        cv.imshow('frame_res', fgmask_res)
 
     #    if cv.sumElems(fgmask)[0] > 100000:
      #       print('!')
@@ -228,4 +266,3 @@ def opticalFlow(cap):
 
         if k == 27:
             break
-
