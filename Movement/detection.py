@@ -276,8 +276,7 @@ def bgMeanFilter(cap, cnt):
         elif cnt < 50:
             _, image = cap.read()
             image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-            print(image.shape)
-            #frame = cv.accumulate(image, frame)
+            frame = cv.accumulate(image, frame)
             cnt = cnt + 1
         elif cnt == 50:
             #frame = frame / 50 # wrong!
@@ -289,12 +288,8 @@ def bgMeanFilter(cap, cnt):
             image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
             result = frame - image
             cv.imshow('result', result)
-        
-        #frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
-        #cv.imshow('Mean', frame)
-        
+            
         k = cv.waitKey(30) & 0xff
-
         if k == 27:
             break
 
