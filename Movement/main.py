@@ -6,8 +6,9 @@ cap = cv2.VideoCapture('NewTest1.mp4')
 
 while True:
     #detection.colorSpace(cap)
-    detection.bgSubMOG2(cap)
+    #detection.bgSubMOG2(cap)
+    detection.label(cap)
     #detection.frameDiff(cap)
     #detection.opticalFlow(cap)
-    print("XX")
+    #print("XX")
 

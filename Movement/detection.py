@@ -1,6 +1,39 @@
 import numpy as np
 import time
 import cv2 as cv
+import matplotlib.pyplot as plt
+
+def label(cap):
+    while(1):
+        ret,frame = cap.read()
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+        
+        kernel = np.ones((3,3),np.uint8)
+        opening = cv.morphologyEx(thresh, cv.MORPH_OPEN,kernel, iterations =2)
+        
+        sure_bg = cv.dilate(opening, kernel, iterations=3)
+        dist_transform=cv.distanceTransform(opening,cv.DIST_L2,5)
+        ret, sure_fg = cv.threshold(dist_transform,0.7*dist_transform.max(),255,0)
+        sure_fg = np.uint8(sure_fg)
+        unknown = cv.subtract(sure_bg, sure_fg)
+        
+        ret, markers = cv.connectedComponents(sure_fg)
+        markers = markers+1
+        markers[unknown==255] = 0
+        markers = cv.watershed(frame,markers)
+        frame[markers == -1] = [255,0,0]
+        frame=cv.resize(frame, (640,480), interpolation=cv.INTER_LINEAR)
+        
+        cv.imshow('frame',frame)
+        
+        k = cv.waitKey(30) & 0xff
+        if k == 27:
+            break
+    
+    
+    cap.release()
+    cv.destroyAllWindows()
 
 def split(frame):
     upper_half = np.hsplit(np.vsplit(frame, 2)[0], 2)
@@ -83,43 +116,42 @@ def bgSubMOG2(cap):
 
 	while(1):
 		ret, frame = cap.read()
-    		_, original = cap.read()
+	    	_, original = cap.read()
                 
-                hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-                #lower_red=np.array([0,20,20])
-                #upper_red=np.array([90,255,255])
+	        hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+     		#lower_red=np.array([0,20,20])
+	        #upper_red=np.array([90,255,255])
 
-                lower_red=np.array([90,0,200])
-                upper_red=np.array([255,255,255])
-                
+	        lower_red=np.array([90,0,200])
+        	upper_red=np.array([255,255,255])
                 mask = cv.inRange(hsv, lower_red, upper_red)
-                fmask = cv.inRange(hsv, lower_red, upper_red)
-                fmask = cv.medianBlur(fmask, 3)
+		fmask = cv.inRange(hsv, lower_red, upper_red)
+		fmask = cv.medianBlur(fmask, 3)
                 
-                res = cv.bitwise_and(frame,frame,mask=mask)
-                fres = cv.bitwise_and(frame, frame, mask=fmask) 
+      		res = cv.bitwise_and(frame,frame,mask=mask)
+     		fres = cv.bitwise_and(frame, frame, mask=fmask) 
 		
-                frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
+		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
-                mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
-                fmask = cv.resize(fmask, (640, 480), interpolation=cv.INTER_LINEAR)
+  		mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
+        	fmask = cv.resize(fmask, (640, 480), interpolation=cv.INTER_LINEAR)
 		res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
 		fres = cv.resize(fres, (640, 480), interpolation=cv.INTER_LINEAR)
                 
-                fgmaskres= fgbg.apply(res)
-                fgmaskfra = fgbg.apply(frame)
-                fgmaskfres = fgbg.apply(fres)
-                fgmaskfres = cv.medianBlur(fgmaskres, 3)
+      		fgmaskres= fgbg.apply(res)
+      		fgmaskfra = fgbg.apply(frame)
+        	fgmaskfres = fgbg.apply(fres)
+        	fgmaskfres = cv.medianBlur(fgmaskres, 3)
 
-                cv.imshow('frame_res',fgmaskres) # Green deleted
+        	cv.imshow('frame_res',fgmaskres) # Green deleted
 		#cv.imshow('original', original)
-                cv.imshow('frame_original', fgmaskfra) # BS original
-                #cv.imshow('res',res)
-                cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
-
+        	cv.imshow('frame_original', fgmaskfra) # BS original
+        	#cv.imshow('res',res)
+        	cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
+	
 		k = cv.waitKey(30) & 0xff
 		if k == 27:
-                    break
+        		break
 
 	cap.release()
 	cv.destroyAllWindows()
