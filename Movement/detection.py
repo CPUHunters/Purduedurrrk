@@ -111,15 +111,20 @@ def bgSubMOG(cap):
 
 
 def bgSubMOG2(cap):
-	fgbg = cv.createBackgroundSubtractorMOG2()
-	fgbg.setDetectShadows(False)
+	fgbg = cv.createBackgroundSubtractorMOG2(history=500,varThreshold=500,detectShadows=0)
+	#fgbg.setDetectShadows(False)
+        #fcc = cv.VideoWriter_fourcc(*'DIVX')
+        #out = cv.VideoWriter('testout.avi',fcc,20.0,(640,480))
 
 	while(1):
 		ret, frame = cap.read()
 	    	_, original = cap.read()
-                
-	        hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-     		#lower_red=np.array([0,20,20])
+
+	        if ret is True:
+                    hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+     		else:
+                    continue
+                #lower_red=np.array([0,20,20])
 	        #upper_red=np.array([90,255,255])
 
 	        lower_red=np.array([90,0,200])
@@ -138,22 +143,49 @@ def bgSubMOG2(cap):
 		res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
 		fres = cv.resize(fres, (640, 480), interpolation=cv.INTER_LINEAR)
                 
-      		fgmaskres= fgbg.apply(res)
+      		fgmaskres = fgbg.apply(res)
       		fgmaskfra = fgbg.apply(frame)
         	fgmaskfres = fgbg.apply(fres)
         	fgmaskfres = cv.medianBlur(fgmaskres, 3)
 
+                '''
+                ret, markers = cv.connectedComponents(fgmaskres)
+                markers = markers+1
+                markers[unknown==255] = 0
+                markers = cv.watershed(frame,markers)
+                frame[markers == -1] = [255,0,0]
+                '''
+                nlabels, labels, stats, centroids = cv.connectedComponentsWithStats(fgmaskres)
+
+                for index, centroid in enumerate(centroids):
+                    if stats[index][0] == 0 and stats[index][1] == 0:
+                        continue
+                    if np.any(np.isnan(centroid)):
+                        continue
+                    
+                    x, y, width, height, area = stats[index]
+                    centerX, centerY = int(centroid[0]), int(centroid[1])
+
+                    if area > 1:
+                        cv.circle(original, (centerX, centerY), 1, (0,255,0),2)
+                        cv.rectangle(original, (x,y), (x + width, y + height),(0,0,255))
+
+
+
         	cv.imshow('frame_res',fgmaskres) # Green deleted
-		#cv.imshow('original', original)
-        	cv.imshow('frame_original', fgmaskfra) # BS original
+		cv.imshow('original', original)
+        	#cv.imshow('frame_original', fgmaskfra) # BS original
         	#cv.imshow('res',res)
-        	cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
-	
-		k = cv.waitKey(30) & 0xff
+        	#cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
+	        
+                #out.write(res)
+		
+                k = cv.waitKey(30) & 0xff
 		if k == 27:
         		break
 
 	cap.release()
+        #out.release()
 	cv.destroyAllWindows()
 
 
