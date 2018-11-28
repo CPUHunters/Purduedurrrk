@@ -6,6 +6,7 @@ import tarfile
 import tensorflow as tf
 import zipfile
 import cv2 as cv
+from pathlib import Path
 
 from distutils.version import StrictVersion
 from collections import defaultdict
@@ -50,13 +51,15 @@ PATH_TO_FROZEN_GRAPH = MODEL_NAME + '/frozen_inference_graph.pb'
 PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
 
 # Download Model
-opener = urllib.request.URLopener()
-opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
-tar_file = tarfile.open(MODEL_FILE)
-for file in tar_file.getmembers():
-    file_name = os.path.basename(file.name)
-    if 'frozen_inference_graph.pb' in file_name:
-        tar_file.extract(file, os.getcwd())
+MODEL_PATH = Path("./",MODEL_FILE)
+if MODEL_PATH.is_file() == False: # If model was already downloaded, don't download again
+    opener = urllib.request.URLopener()
+    opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
+    tar_file = tarfile.open(MODEL_FILE)
+    for file in tar_file.getmembers():
+        file_name = os.path.basename(file.name)
+        if 'frozen_inference_graph.pb' in file_name:
+            tar_file.extract(file, os.getcwd())
 
 # Load a (frozen) Tensorflow model into memory
 detection_graph = tf.Graph()
@@ -154,8 +157,30 @@ for image_path in TEST_IMAGE_PATHS:
         line_thickness=8)
     plt.figure(figsize=IMAGE_SIZE)
     rgbimg = cv.cvtColor(image_np, cv.COLOR_BGR2RGB)
-    cv.imshow("Image {}".format(cnt), rgbimg)
-    cv.imwrite(os.path.join(path, '{}.jpg'.format(cnt)), rgbimg)
+    
+    label = []
+    accuracy = []
+
+    # Top 3 scores
+    for i in range(0, 3):
+        label.append(category_index[output_dict.get('detection_classes')[i].astype(np.uint8)]['name'])
+        accuracy.append(output_dict.get('detection_scores')[i])
+        print("Label ", i, " : ", label[i], "(", accuracy[i], ")")
+
+    # If "Bird" label has the highest accuracy, stop 
+    '''if label[0] == 'bird':
+        print('Bird is detected with accuracy ', accuracy[0])
+        break'''
+
+    # If in top 3 scores, "Bird" label has the accuracy more than 0.5, stop
+    for i in range(0,3) :
+        if label[i] == 'bird' and accuracy[i] >= 0.5:
+            print('Bird is detected with accuracy ', accuracy[i])
+            break
+
+    # Store result images to path
+    #cv.imshow("Image {}".format(cnt), rgbimg)
+    #cv.imwrite(os.path.join(path, '{}.jpg'.format(cnt)), rgbimg)
     cv.waitKey(5000)
     cnt = cnt + 1
 cv.waitKey(0)
