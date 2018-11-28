@@ -2,6 +2,7 @@ import numpy as np
 import time
 import cv2 as cv
 import matplotlib.pyplot as plt
+import os
 
 def label(cap):
     while(1):
@@ -112,14 +113,14 @@ def bgSubMOG(cap):
 
 def bgSubMOG2(cap):
 	fgbg = cv.createBackgroundSubtractorMOG2(history=500,varThreshold=500,detectShadows=0)
-	#fgbg.setDetectShadows(False)
+        #fgbg.setDetectShadows(False)
         #fcc = cv.VideoWriter_fourcc(*'DIVX')
         #out = cv.VideoWriter('testout.avi',fcc,20.0,(640,480))
-
+        count = 1
 	while(1):
 		ret, frame = cap.read()
 	    	_, original = cap.read()
-
+                _, test = cap.read()
 	        if ret is True:
                     hsv=cv.cvtColor(frame, cv.COLOR_BGR2HSV)
      		else:
@@ -138,7 +139,8 @@ def bgSubMOG2(cap):
 		
 		frame = cv.resize(frame, (640, 480), interpolation=cv.INTER_LINEAR)
 		original = cv.resize(original, (640, 480), interpolation=cv.INTER_LINEAR)
-  		mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
+  		test = cv.resize(test, (640,480), interpolation=cv.INTER_LINEAR)
+                mask = cv.resize(mask, (640, 480), interpolation=cv.INTER_LINEAR)
         	fmask = cv.resize(fmask, (640, 480), interpolation=cv.INTER_LINEAR)
 		res = cv.resize(res, (640, 480), interpolation=cv.INTER_LINEAR)
 		fres = cv.resize(fres, (640, 480), interpolation=cv.INTER_LINEAR)
@@ -156,7 +158,7 @@ def bgSubMOG2(cap):
                 frame[markers == -1] = [255,0,0]
                 '''
                 nlabels, labels, stats, centroids = cv.connectedComponentsWithStats(fgmaskres)
-
+                str = 0
                 for index, centroid in enumerate(centroids):
                     if stats[index][0] == 0 and stats[index][1] == 0:
                         continue
@@ -166,14 +168,21 @@ def bgSubMOG2(cap):
                     x, y, width, height, area = stats[index]
                     centerX, centerY = int(centroid[0]), int(centroid[1])
 
-                    if area > 1:
+                    if area > 40:
+                        if count == 45:
+                            imgGrop = test[y-20:y+height+20,x-20:x+width+20]
+                            cv.imwrite("/home/pi/CPU/Hyesun/Movement/test/%d.jpg" %str,imgGrop)
+                            str = str + 1
+
                         cv.circle(original, (centerX, centerY), 1, (0,255,0),2)
                         cv.rectangle(original, (x,y), (x + width, y + height),(0,0,255))
-
-
+                        #img_trim=img[y:y+height,x:x+width]
+                        #cv.imwrite("image.jpg",img_trim)
 
         	cv.imshow('frame_res',fgmaskres) # Green deleted
 		cv.imshow('original', original)
+                print(count) 
+                count = count + 1
         	#cv.imshow('frame_original', fgmaskfra) # BS original
         	#cv.imshow('res',res)
         	#cv.imshow('frame_filter', fgmaskfres) # Median filtered green deleted
