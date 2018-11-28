@@ -1,0 +1,17 @@
+0 : Rusty Blackbird
+1 : Baird Sparrow
+2 : Black throated Sparrow
+3 : Brewer Sparrow
+4 : Clay colored Sparrow
+5 : Fied Sparrow
+6 : Grasshopper Sparrow
+7 : Harris Sparrow
+8 : Le Conte Sparrow
+9 : Nelson Sharp tailed Sparrow
+10 : Savannah Sparrow
+11 : Song Sparrow
+12 : Birds on the tree
+13 : Birds on the fruit tree
+14 : Test Video 1
+15 : Test Video 2
+16 : Test Video 3
