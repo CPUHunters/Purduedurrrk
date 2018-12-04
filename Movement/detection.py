@@ -52,9 +52,10 @@ def bgSubMOG2(cap):
 
             if area > 40:
                 if count == 15:
-                    imgGrop = test[y - 20:y + height + 20, x - 20:x + width + 20]
-                    cv.imwrite("./test/%d.jpg" % str, imgGrop)
-                    str = str + 1
+                    if (x-20) > 0 and (y-20) > 0:
+                        imgGrop = test[y - 20:y + height + 20, x - 20:x + width + 20]
+                        cv.imwrite("./test/%d.jpg" % str, imgGrop)
+                        str = str + 1
 
                 cv.circle(original, (centerX, centerY), 1, (0, 255, 0), 2)
                 cv.rectangle(original, (x, y), (x + width, y + height), (0, 0, 255))
