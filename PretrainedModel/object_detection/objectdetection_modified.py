@@ -26,9 +26,9 @@ from utils import label_map_util
 from utils import visualization_utils as vis_util
 
 # What model to download : Tensorflow detection model zoo
-MODEL_NAME = 'ssd_mobilenet_v1_coco_2017_11_17'
+#MODEL_NAME = 'ssd_mobilenet_v1_coco_2017_11_17'
 #MODEL_NAME = 'ssd_mobilenet_v1_coco_2018_01_28'
-#MODEL_NAME = 'ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03'
+MODEL_NAME = 'ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03'
 #MODEL_NAME = 'ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync_2018_07_03'
 #MODEL_NAME = 'ssd_mobilenet_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03'
 #MODEL_NAME = 'faster_rcnn_nas_coco_2018_01_28'
@@ -84,10 +84,12 @@ def load_image_into_numpy_array(image):
 # image1.jpg
 # image2.jpg
 # If you want to test the code with your images, just add path to the images to the TEST_IMAGE_PATHS.
-PATH_TO_TEST_IMAGES_DIR = 'test_images'
+PATH_TO_TEST_IMAGES_DIR = 'crop_test_all/new birds'
 TEST_IMAGE_PATHS = [ 
-    os.path.join(PATH_TO_TEST_IMAGES_DIR, '{}.jpg'.format(i)) for i in range(0, 17) ]
+    #os.path.join(PATH_TO_TEST_IMAGES_DIR, '{}.jpg'.format(i)) for i in range(0, 100000) ]
     #'image5.png']
+    os.path.join(PATH_TO_TEST_IMAGES_DIR, '6.jpg')]
+    #os.path.join(PATH_TO_TEST_IMAGES_DIR, '12.jpg')]
     #'{}.jpg'.format(i) for i in range(0, 7)]
 
 # Size, in inches, of the output images.
@@ -134,53 +136,128 @@ def run_inference_for_single_image(image, graph):
                 output_dict['detection_masks'] = output_dict['detection_masks'][0]
     return output_dict
 
-path='C:/models/research/object_detection/result'
-cnt = 0
-for image_path in TEST_IMAGE_PATHS:
-    image = Image.open(image_path)
-    # the array based representation of the image will be used later in order to prepare the
-    # result image with boxes and labels on it.
-    image_np = load_image_into_numpy_array(image)
-    # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-    image_np_expanded = np.expand_dims(image_np, axis=0)
-    # Actual detection.
-    output_dict = run_inference_for_single_image(image_np, detection_graph)
-    # Visualization of the results of a detection.
-    vis_util.visualize_boxes_and_labels_on_image_array(
-        image_np,
-        output_dict['detection_boxes'],
-        output_dict['detection_classes'],
-        output_dict['detection_scores'],
-        category_index,
-        instance_masks=output_dict.get('detection_masks'),
-        use_normalized_coordinates=True,
-        line_thickness=8)
-    plt.figure(figsize=IMAGE_SIZE)
-    rgbimg = cv.cvtColor(image_np, cv.COLOR_BGR2RGB)
+def main() :
+    path='C:/Purduedurrrk/PretrainedModel/object_detection/result/crop_test_all/ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03/new bird'
+    cnt = 0
+    #with open('./result/crop_test_all/result.txt','w') as f:
+    for image_path in TEST_IMAGE_PATHS:
+        if not os.path.exists(image_path) :
+            print('not exist')
+            continue
+        image = Image.open(image_path)
+        # the array based representation of the image will be used later in order to prepare the
+        # result image with boxes and labels on it.
+        image_np = load_image_into_numpy_array(image)
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+        image_np_expanded = np.expand_dims(image_np, axis=0)
+        # Actual detection.
+        output_dict = run_inference_for_single_image(image_np, detection_graph)
+        # Visualization of the results of a detection.
+        vis_util.visualize_boxes_and_labels_on_image_array(
+            image_np,
+            output_dict['detection_boxes'],
+            output_dict['detection_classes'],
+            output_dict['detection_scores'],
+            category_index,
+            instance_masks=output_dict.get('detection_masks'),
+            use_normalized_coordinates=True,
+            line_thickness=8)
+        plt.figure(figsize=IMAGE_SIZE)
+        rgbimg = cv.cvtColor(image_np, cv.COLOR_BGR2RGB)
     
-    label = []
-    accuracy = []
+        label = []
+        accuracy = []
 
-    # Top 3 scores
-    for i in range(0, 3):
-        label.append(category_index[output_dict.get('detection_classes')[i].astype(np.uint8)]['name'])
-        accuracy.append(output_dict.get('detection_scores')[i])
-        print("Label ", i, " : ", label[i], "(", accuracy[i], ")")
+        # Top 3 scores
+        print(image_path)
+        #writeStr = image_path + "\n"
+        #f.write(writeStr)
+        for i in range(0, 3):
+            label.append(category_index[output_dict.get('detection_classes')[i].astype(np.uint8)]['name'])
+            accuracy.append(output_dict.get('detection_scores')[i])
+            #writeStr = "Label {} : {} ({})\n".format(i, label[i], accuracy[i])
+            print("Label {} : {} ({})".format(i, label[i], accuracy[i]))
+            #f.write(writeStr)
 
-    # If "Bird" label has the highest accuracy, stop 
-    '''if label[0] == 'bird':
+        # If "Bird" label has the highest accuracy, stop 
+            '''if label[0] == 'bird':
+                print('Bird is detected with accuracy ', accuracy[0])
+                break'''
+
+        # If in top 3 scores, "Bird" label has the accuracy more than 0.5, stop
+        for i in range(0,3) :
+            if label[i] == 'bird' and accuracy[i] >= 0.5:
+                print('Bird is detected with accuracy ', accuracy[i])
+                break
+
+        # Store result images to path
+        cv.imshow("Image {}".format(cnt), rgbimg)
+        cv.imwrite(os.path.join(path, '{}.jpg'.format(cnt)), rgbimg)
+        cnt = cnt + 1
+
+        k = cv.waitKey(30) & 0xff
+        if k == 27:
+            break
+    cv.destroyAllWindows()
+
+def mog(cap) :
+    path='C:/Purduedurrrk/PretrainedModel/object_detection/result/airplanes'
+    cnt = 0
+    frameCnt = 0
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frameCnt < 200:
+            frameCnt = frameCnt +1
+            continue
+
+        if frameCnt > 400:
+            break
+
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+        image = Image.fromarray(frame)
+        image_np = load_image_into_numpy_array(image)
+        image_np_expanded = np.expand_dims(image_np, axis=0)
+        output_dict = run_inference_for_single_image(image_np, detection_graph)
+        vis_util.visualize_boxes_and_labels_on_image_array(
+                image_np,
+                output_dict['detection_boxes'],
+                output_dict['detection_classes'],
+                output_dict['detection_scores'],
+                category_index,
+                instance_masks=output_dict.get('detection_masks'),
+                use_normalized_coordinates=True,
+                line_thickness=8)
+        plt.figure(figsize=IMAGE_SIZE)
+        rgbimg = cv.cvtColor(image_np, cv.COLOR_BGR2RGB)
+    
+        label = []
+        accuracy = []
+
+        print('frame ', frameCnt)
+        # Top 3 scores
+        for i in range(0, 3):
+            label.append(category_index[output_dict.get('detection_classes')[i].astype(np.uint8)]['name'])
+            accuracy.append(output_dict.get('detection_scores')[i])
+            print("Label ", i, " : ", label[i], "(", accuracy[i], ")")
+
+        # If "Bird" label has the highest accuracy, stop 
+        '''if label[0] == 'bird':
         print('Bird is detected with accuracy ', accuracy[0])
         break'''
 
-    # If in top 3 scores, "Bird" label has the accuracy more than 0.5, stop
-    for i in range(0,3) :
-        if label[i] == 'bird' and accuracy[i] >= 0.5:
-            print('Bird is detected with accuracy ', accuracy[i])
-            break
+        # If in top 3 scores, "Bird" label has the accuracy more than 0.5, stop
+        for i in range(0, len(label)) :
+            if label[i] == 'bird' and accuracy[i] >= 0.5:
+                print('Bird is detected with accuracy ', accuracy[i])
+                break
 
-    # Store result images to path
-    #cv.imshow("Image {}".format(cnt), rgbimg)
-    #cv.imwrite(os.path.join(path, '{}.jpg'.format(cnt)), rgbimg)
-    cv.waitKey(5000)
-    cnt = cnt + 1
-cv.waitKey(0)
+        # Store result images to path
+        cv.imshow("frame", rgbimg)
+        cv.imwrite(os.path.join(path, '{}.jpg'.format(cnt)), rgbimg)
+        cnt = cnt + 1
+        frameCnt = frameCnt + 1
+
+    cap.release()
+    cv.destroyAllWindows()
