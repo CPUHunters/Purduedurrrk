@@ -1,0 +1,4 @@
+airplanes
+bird
+skys
+trees
