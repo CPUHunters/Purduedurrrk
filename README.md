@@ -1,2 +1,2 @@
-# PreviousData
-Hi-Tech Scarecrow's previous data from last summer session
+# Hi Tech Scarecrow
+Hi-tech scarecrow automatically scares away the birds by detecting them with camera. Also, it provides user-friendly website to manage the bird control system. To detect the birds, the background subtraction is the proper technology to our project. Also, we will offer a web site to users. It will include the map of orchard, the location of cameras and the list of various scary sounds. The map will inform the location where the birds are detected. Moreover, they can choose a location on the map when they want to make a sound .  Users can choose what sound they will use from the list.
