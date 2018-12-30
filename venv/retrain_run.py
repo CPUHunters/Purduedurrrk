@@ -5,7 +5,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-
+import time
 
 #imagePath = '/tmp/test.jpg'                                      # 추론을 진행할 이미지 경로
 modelFullPath = './tmp/output_graph.pb'                                      # 읽어들일 graph 파일 경로
@@ -27,12 +27,15 @@ def run_inference_on_image(count):
     file_list = os.listdir(path_dir)
     file_list.sort()
 
-    file=open("./result.txt","a")
-    answer = None
-  #  if not tf.gfile.Exists(imagePath):
-   #     tf.logging.fatal('File does not exist %s', imagePath)
-    #    return answer
-    #print(file_list)
+    #file=open("./result.txt","a")
+    answer = 0
+
+    # if not tf.gfile.Exists(imagePath):
+    #     tf.logging.fatal('File does not exist %s', imagePath)
+    #     return answer
+    # print(file_list)
+
+
     for item in file_list:
         file_path = ("./test/%s/"%abc)+item
         #print(file_path)
@@ -50,7 +53,7 @@ def run_inference_on_image(count):
                                    {'DecodeJpeg/contents:0': image_data})
             predictions = np.squeeze(predictions)
 
-            #print('< %s >' % item)
+            print('< In %s th frame, %s image is being classified. >' % (abc,item))
 
             top_k = predictions.argsort()[-5:][::-1]  # 가장 높은 확률을 가진 5개(top 5)의 예측값(predictions)을 얻는다.
             f = open(labelsFullPath, 'rb')
@@ -60,14 +63,17 @@ def run_inference_on_image(count):
             for node_id in top_k:
                 human_string = labels[node_id]
                 score = predictions[node_id]
-                #print('\'%s\' (score = %.5f) %d' % (human_string[2:-3], score,order))
+                # print('\'%s\' (score = %.5f) %d' % (human_string[2:-3], score,order))
                 order = order+1
                 if ("bird" in human_string) and (order == 2) :
-                    data=("\'%s-%s\'  1\n" % (abc,item))
-                elif (order == 2):
-                    data=("\'%s-%s\'  0\n" % (abc,item))
-            file.write(data)
-            answer = labels[top_k[0]]
+                    #data=("\'%s-%s\'  1\n" % (abc,item))
+                    print("BIRD DETECTED!!!")
+                    answer = 1
+                    return answer
+                # elif (order == 2):
+                #     print("not detect")
+                    #data=("\'%s-%s\'  0\n" % (abc,item))
+            #file.write(data)
             f.close()
     return answer
 
